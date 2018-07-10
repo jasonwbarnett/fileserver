@@ -609,7 +609,7 @@ func checkPreconditions(w http.ResponseWriter, r *http.Request, modtime time.Tim
 }
 
 // name is '/'-separated, not filepath.Separator.
-func serveFile(w http.ResponseWriter, r *http.Request, fs FileSystem, name string, redirect bool) {
+func serveFile(w http.ResponseWriter, r *http.Request, fs http.FileSystem, name string, redirect bool) {
 	const indexPage = "/index.html"
 
 	// redirect .../index.html to .../
@@ -742,7 +742,7 @@ func ServeFile(w http.ResponseWriter, r *http.Request, name string) {
 		return
 	}
 	dir, file := filepath.Split(name)
-	serveFile(w, r, Dir(dir), file, false)
+	serveFile(w, r, http.Dir(dir), file, false)
 }
 
 func containsDotDot(v string) bool {
@@ -760,7 +760,7 @@ func containsDotDot(v string) bool {
 func isSlashRune(r rune) bool { return r == '/' || r == '\\' }
 
 type fileHandler struct {
-	root FileSystem
+	root http.FileSystem
 }
 
 // FileServer returns a handler that serves HTTP requests
@@ -774,7 +774,7 @@ type fileHandler struct {
 // As a special case, the returned file server redirects any request
 // ending in "/index.html" to the same path, without the final
 // "index.html".
-func FileServer(root FileSystem) http.Handler {
+func FileServer(root http.FileSystem) http.Handler {
 	return &fileHandler{root}
 }
 
