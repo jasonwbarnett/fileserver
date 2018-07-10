@@ -130,8 +130,8 @@ func jsonDirList(w http.ResponseWriter, r *http.Request, f http.File) {
 	json.NewEncoder(w).Encode(fileList)
 }
 
-func fileType(fm os.FileInfo) (ftype string) {
-	if fm.IsDir() {
+func fileType(fi os.FileInfo) (ftype string) {
+	if fi.IsDir() {
 		ftype = "directory"
 	} else {
 		ftype = "file"
