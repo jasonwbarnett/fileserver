@@ -50,22 +50,6 @@ var htmlReplacer = strings.NewReplacer(
 	"'", "&#39;",
 )
 
-// A Dir implements FileSystem using the native file system restricted to a
-// specific directory tree.
-//
-// While the FileSystem.Open method takes '/'-separated paths, a Dir's string
-// value is a filename on the native file system, not a URL, so it is separated
-// by filepath.Separator, which isn't necessarily '/'.
-//
-// Note that Dir will allow access to files and directories starting with a
-// period, which could expose sensitive directories like a .git directory or
-// sensitive files like .htpasswd. To exclude files with a leading period,
-// remove the files/directories from the server or create a custom FileSystem
-// implementation.
-//
-// An empty Dir is treated as ".".
-type Dir string
-
 // mapDirOpenError maps the provided non-nil error from opening name
 // to a possibly better non-nil error. In particular, it turns OS-specific errors
 // about opening files in non-directories into os.ErrNotExist. See Issue 18984.
@@ -88,22 +72,6 @@ func mapDirOpenError(originalErr error, name string) error {
 		}
 	}
 	return originalErr
-}
-
-func (d Dir) Open(name string) (File, error) {
-	if filepath.Separator != '/' && strings.ContainsRune(name, filepath.Separator) {
-		return nil, errors.New("http: invalid character in file path")
-	}
-	dir := string(d)
-	if dir == "" {
-		dir = "."
-	}
-	fullName := filepath.Join(dir, filepath.FromSlash(path.Clean("/"+name)))
-	f, err := os.Open(fullName)
-	if err != nil {
-		return nil, mapDirOpenError(err, fullName)
-	}
-	return f, nil
 }
 
 // A FileSystem implements access to a collection of named files.
