@@ -632,7 +632,11 @@ func serveFile(w http.ResponseWriter, r *http.Request, fs http.FileSystem, name 
 			return
 		}
 		w.Header().Set("Last-Modified", d.ModTime().UTC().Format(http.TimeFormat))
-		jsonDirList(w, r, f)
+		if r.Header.Get("Accept") == "application/json" {
+			jsonDirList(w, r, f)
+		} else {
+			dirList(w, r, f)
+		}
 		return
 	}
 
