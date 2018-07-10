@@ -115,8 +115,8 @@ func jsonDirList(w http.ResponseWriter, r *http.Request, f http.File) {
 	}
 	sort.Slice(dirs, func(i, j int) bool { return dirs[i].Name() < dirs[j].Name() })
 
-	var fileList []jsonDirItem
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	var fileList []jsonDirItem
 	for _, d := range dirs {
 		name := d.Name()
 		// name may contain '?' or '#', which must be escaped to remain
