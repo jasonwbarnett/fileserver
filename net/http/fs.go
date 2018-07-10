@@ -118,13 +118,8 @@ func jsonDirList(w http.ResponseWriter, r *http.Request, f http.File) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	var fileList []jsonDirItem
 	for _, d := range dirs {
-		name := d.Name()
-		// name may contain '?' or '#', which must be escaped to remain
-		// part of the URL path, and not indicate the start of a query
-		// string or fragment.
-
 		file := jsonDirItem{}
-		file.Name = name
+		file.Name = d.Name()
 		file.Type = fileType(d)
 		file.ModTime = d.ModTime()
 		if file.Type == "file" {
