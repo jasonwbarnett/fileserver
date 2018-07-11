@@ -7,9 +7,11 @@
 package http
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"mime"
 	"mime/multipart"
 	"net/http"
@@ -95,6 +97,46 @@ func dirList(w http.ResponseWriter, r *http.Request, f http.File) {
 		fmt.Fprintf(w, "<a href=\"%s\">%s</a>\n", url.String(), htmlReplacer.Replace(name))
 	}
 	fmt.Fprintf(w, "</pre>\n")
+}
+
+type jsonDirItem struct {
+	Name    string    `json:"name"`
+	Type    string    `json:"type"`
+	ModTime time.Time `json:"mtime"`
+	Size    int64     `json:"size,omitempty"`
+}
+
+func jsonDirList(w http.ResponseWriter, r *http.Request, f http.File) {
+	dirs, err := f.Readdir(-1)
+	if err != nil {
+		logf(r, "http: error reading directory: %v", err)
+		http.Error(w, "Error reading directory", http.StatusInternalServerError)
+		return
+	}
+	sort.Slice(dirs, func(i, j int) bool { return dirs[i].Name() < dirs[j].Name() })
+
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	var fileList []jsonDirItem
+	for _, d := range dirs {
+		file := jsonDirItem{}
+		file.Name = d.Name()
+		file.Type = fileType(d)
+		file.ModTime = d.ModTime()
+		if file.Type == "file" {
+			file.Size = d.Size()
+		}
+		fileList = append(fileList, file)
+	}
+	json.NewEncoder(w).Encode(fileList)
+}
+
+func fileType(fi os.FileInfo) (ftype string) {
+	if fi.IsDir() {
+		ftype = "directory"
+	} else {
+		ftype = "file"
+	}
+	return
 }
 
 // ServeContent replies to the request using the content in the
@@ -584,8 +626,12 @@ func serveFile(w http.ResponseWriter, r *http.Request, fs http.FileSystem, name 
 			writeNotModified(w)
 			return
 		}
-		w.Header().Set("Last-Modified", d.ModTime().UTC().Format(TimeFormat))
-		dirList(w, r, f)
+		w.Header().Set("Last-Modified", d.ModTime().UTC().Format(http.TimeFormat))
+		if r.Header.Get("Accept") == "application/json" {
+			jsonDirList(w, r, f)
+		} else {
+			dirList(w, r, f)
+		}
 		return
 	}
 
