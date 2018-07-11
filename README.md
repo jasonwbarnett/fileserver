@@ -32,6 +32,56 @@ func main() {
 }
 ```
 
+```bash
+go run main
+```
+
+List directory contents as JSON
+
+```bash
+$ curl 'http://127.0.0.1:8080/' -H 'Accept: application/json' | jq '.'
+[
+  {
+    "name": "bash",
+    "type": "directory",
+    "mtime": "2017-07-15T14:09:01-07:00"
+  },
+  {
+    "name": "cups",
+    "type": "directory",
+    "mtime": "2017-12-10T16:16:59-08:00"
+  },
+  {
+    "name": "groff",
+    "type": "directory",
+    "mtime": "2017-07-15T14:07:46-07:00"
+  },
+  {
+    "name": "ntp",
+    "type": "directory",
+    "mtime": "2017-05-04T17:21:03-07:00"
+  },
+  {
+    "name": "postfix",
+    "type": "directory",
+    "mtime": "2017-07-25T18:47:14-07:00"
+  }
+]
+```
+
+List directory contents as HTML
+
+```bash
+$ curl 'http://127.0.0.1:8080/'
+<pre>
+<a href="bash/">bash/</a>
+<a href="cups/">cups/</a>
+<a href="groff/">groff/</a>
+<a href="ntp/">ntp/</a>
+<a href="postfix/">postfix/</a>
+</pre>
+```
+
 [1]: http://nginx.org/en/docs/http/ngx_http_autoindex_module.html
 [2]: https://golang.org/pkg/net/http/#FileServer
 [3]: https://github.com/golang/go/issues/23898
