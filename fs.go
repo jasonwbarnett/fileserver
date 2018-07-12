@@ -26,7 +26,11 @@ import (
 	"time"
 )
 
-const sniffLen = 512
+const (
+	sniffLen          = 512
+	fileTypeFile      = "file"
+	fileTypeDirectory = "directory"
+)
 
 // logf prints to the ErrorLog of the *Server associated with request r
 // via ServerContextKey. If there's no associated server, or if ErrorLog
@@ -118,11 +122,12 @@ func jsonDirList(w http.ResponseWriter, r *http.Request, f http.File) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	var fileList []jsonDirItem
 	for _, d := range dirs {
-		file := jsonDirItem{}
-		file.Name = d.Name()
-		file.Type = fileType(d)
-		file.ModTime = d.ModTime()
-		if file.Type == "file" {
+		file := jsonDirItem{
+			Name:    d.Name(),
+			Type:    fileTypeName(d),
+			ModTime: d.ModTime(),
+		}
+		if file.Type == fileTypeFile {
 			file.Size = d.Size()
 		}
 		fileList = append(fileList, file)
@@ -130,13 +135,11 @@ func jsonDirList(w http.ResponseWriter, r *http.Request, f http.File) {
 	json.NewEncoder(w).Encode(fileList)
 }
 
-func fileType(fi os.FileInfo) (ftype string) {
+func fileTypeName(fi os.FileInfo) string {
 	if fi.IsDir() {
-		ftype = "directory"
-	} else {
-		ftype = "file"
+		return fileTypeDirectory
 	}
-	return
+	return fileTypeFile
 }
 
 // ServeContent replies to the request using the content in the
@@ -627,7 +630,8 @@ func serveFile(w http.ResponseWriter, r *http.Request, fs http.FileSystem, name 
 			return
 		}
 		w.Header().Set("Last-Modified", d.ModTime().UTC().Format(http.TimeFormat))
-		if r.Header.Get("Accept") == "application/json" {
+		acceptHeader := r.Header.Get("Accept")
+		if strings.Contains(acceptHeader, "application/json") {
 			jsonDirList(w, r, f)
 		} else {
 			dirList(w, r, f)
