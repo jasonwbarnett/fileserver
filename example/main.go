@@ -4,10 +4,10 @@ import (
 	"log"
 	"net/http"
 
-	jsonfs_http "github.com/jasonwbarnett/jsonfs/net/http"
+	"github.com/jasonwbarnett/jsonfs/src/fileserver"
 )
 
 func main() {
 	// Simple static webserver:
-	log.Fatal(http.ListenAndServe(":8080", jsonfs_http.FileServer(http.Dir("/usr/share/doc"))))
+	log.Fatal(http.ListenAndServe(":8080", fileserver.New(http.Dir("/usr/share/doc"))))
 }

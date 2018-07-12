@@ -4,7 +4,7 @@
 
 // HTTP file system request handler
 
-package http
+package fileserver
 
 import (
 	"encoding/json"
@@ -715,18 +715,18 @@ type fileHandler struct {
 	root http.FileSystem
 }
 
-// FileServer returns a handler that serves HTTP requests
+// New returns a handler that serves HTTP requests
 // with the contents of the file system rooted at root.
 //
 // To use the operating system's file system implementation,
 // use http.Dir:
 //
-//     http.Handle("/", http.FileServer(http.Dir("/tmp")))
+//     http.Handle("/", fileserver.New(http.Dir("/tmp")))
 //
 // As a special case, the returned file server redirects any request
 // ending in "/index.html" to the same path, without the final
 // "index.html".
-func FileServer(root http.FileSystem) http.Handler {
+func New(root http.FileSystem) http.Handler {
 	return &fileHandler{root}
 }
 
