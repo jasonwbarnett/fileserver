@@ -1,4 +1,4 @@
-# jsonfs
+# golang fileserver
 
 ## What is this?
 
@@ -24,7 +24,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/jasonwbarnett/jsonfs/src/fileserver"
+	"github.com/jasonwbarnett/fileserver"
 )
 
 func main() {
