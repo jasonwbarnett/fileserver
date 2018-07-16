@@ -142,46 +142,6 @@ func fileTypeName(fi os.FileInfo) string {
 	return fileTypeFile
 }
 
-// ServeContent replies to the request using the content in the
-// provided ReadSeeker. The main benefit of ServeContent over io.Copy
-// is that it handles Range requests properly, sets the MIME type, and
-// handles If-Match, If-Unmodified-Since, If-None-Match, If-Modified-Since,
-// and If-Range requests.
-//
-// If the response's Content-Type header is not set, ServeContent
-// first tries to deduce the type from name's file extension and,
-// if that fails, falls back to reading the first block of the content
-// and passing it to DetectContentType.
-// The name is otherwise unused; in particular it can be empty and is
-// never sent in the response.
-//
-// If modtime is not the zero time or Unix epoch, ServeContent
-// includes it in a Last-Modified header in the response. If the
-// request includes an If-Modified-Since header, ServeContent uses
-// modtime to decide whether the content needs to be sent at all.
-//
-// The content's Seek method must work: ServeContent uses
-// a seek to the end of the content to determine its size.
-//
-// If the caller has set w's ETag header formatted per RFC 7232, section 2.3,
-// ServeContent uses it to handle requests using If-Match, If-None-Match, or If-Range.
-//
-// Note that *os.File implements the io.ReadSeeker interface.
-func ServeContent(w http.ResponseWriter, req *http.Request, name string, modtime time.Time, content io.ReadSeeker) {
-	sizeFunc := func() (int64, error) {
-		size, err := content.Seek(0, io.SeekEnd)
-		if err != nil {
-			return 0, errSeeker
-		}
-		_, err = content.Seek(0, io.SeekStart)
-		if err != nil {
-			return 0, errSeeker
-		}
-		return size, nil
-	}
-	serveContent(w, req, name, modtime, sizeFunc, content)
-}
-
 // errSeeker is returned by ServeContent's sizeFunc when the content
 // doesn't seek properly. The underlying Seeker's error text isn't
 // included in the sizeFunc reply so it's not sent over HTTP to end
@@ -668,33 +628,6 @@ func localRedirect(w http.ResponseWriter, r *http.Request, newPath string) {
 	}
 	w.Header().Set("Location", newPath)
 	w.WriteHeader(http.StatusMovedPermanently)
-}
-
-// ServeFile replies to the request with the contents of the named
-// file or directory.
-//
-// If the provided file or directory name is a relative path, it is
-// interpreted relative to the current directory and may ascend to parent
-// directories. If the provided name is constructed from user input, it
-// should be sanitized before calling ServeFile. As a precaution, ServeFile
-// will reject requests where r.URL.Path contains a ".." path element.
-//
-// As a special case, ServeFile redirects any request where r.URL.Path
-// ends in "/index.html" to the same path, without the final
-// "index.html". To avoid such redirects either modify the path or
-// use ServeContent.
-func ServeFile(w http.ResponseWriter, r *http.Request, name string) {
-	if containsDotDot(r.URL.Path) {
-		// Too many programs use r.URL.Path to construct the argument to
-		// serveFile. Reject the request under the assumption that happened
-		// here and ".." may not be wanted.
-		// Note that name might not contain "..", for example if code (still
-		// incorrectly) used filepath.Join(myDir, r.URL.Path).
-		http.Error(w, "invalid URL path", http.StatusBadRequest)
-		return
-	}
-	dir, file := filepath.Split(name)
-	serveFile(w, r, http.Dir(dir), file, false)
 }
 
 func containsDotDot(v string) bool {
