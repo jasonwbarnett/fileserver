@@ -24,6 +24,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/cespare/xxhash"
 )
 
 const (
@@ -157,6 +159,18 @@ var errNoOverlap = errors.New("invalid range: failed to overlap")
 // content must be seeked to the beginning of the file.
 // The sizeFunc is called at most once. Its error, if any, is sent in the HTTP response.
 func serveContent(w http.ResponseWriter, r *http.Request, name string, modtime time.Time, sizeFunc func() (int64, error), content io.ReadSeeker) {
+	var eTag uint64
+
+	h := xxhash.New()
+	if _, err := io.Copy(h, content); err != nil {
+		w.Header().Set("X-ETag-Error", "Unable to generate ETag")
+	} else {
+		eTag = h.Sum64()
+		if eTag != 0 {
+			w.Header().Set("ETag", strconv.Quote(strconv.FormatUint(eTag, 10)))
+		}
+	}
+
 	setLastModified(w, modtime)
 	done, rangeReq := checkPreconditions(w, r, modtime)
 	if done {
